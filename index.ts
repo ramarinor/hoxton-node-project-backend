@@ -171,9 +171,78 @@ app.get('/questions', async (req, res) => {
     });
     res.send(questions);
   } catch (err) {
-    //@ts-ignore
     res
       .status(401)
       .send({ error: `Only signed in users can see their questions` });
+  }
+});
+
+app.patch('/questions/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { answer } = req.body;
+  const token = req.headers.authorization || '';
+  try {
+    const user = await getUserFromToken(token);
+    const question = await prisma.question.findUnique({ where: { id } });
+    if (!user) throw Error('Boom');
+    if (!question) {
+      res.status(404).send('This question does not exist!');
+      return;
+    }
+    if (!answer) {
+      res.status(400).send({ error: 'Answer must be provided!' });
+      return;
+    }
+
+    if (user.id === question.userId) {
+      await prisma.question.update({
+        where: { id },
+        data: { answer, isAnswered: true }
+      });
+      const questions = await prisma.question.findMany({
+        where: { userId: user.id, isAnswered: false },
+        include: { asker: { select: { username: true } } }
+      });
+      res.send(questions);
+    } else {
+      res
+        .status(401)
+        .send({ error: 'This question cannot be answered by you!' });
+    }
+  } catch (err) {
+    res
+      .status(401)
+      .send({ error: `Only signed in users can answer their questions` });
+  }
+});
+
+app.delete('/questions/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const token = req.headers.authorization || '';
+  try {
+    const user = await getUserFromToken(token);
+    const question = await prisma.question.findUnique({ where: { id } });
+    if (!user) throw Error('Boom');
+    if (!question) {
+      res.status(404).send('This question does not exist!');
+      return;
+    }
+
+    if (user.id === question.userId) {
+      await prisma.question.delete({ where: { id } });
+      const questions = await prisma.question.findMany({
+        where: { userId: user.id, isAnswered: false },
+        include: { asker: { select: { username: true } } }
+      });
+      res.send(questions);
+    } else {
+      res
+        .status(401)
+        .send({ error: 'This question cannot be deleted by you!' });
+    }
+  } catch (err) {
+    res
+      .status(401)
+      .send({ error: `Only signed in users can delete their questions` });
   }
 });
