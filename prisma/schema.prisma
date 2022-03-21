@@ -9,3 +9,25 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  username  String     @unique
+  password  String
+  image     String
+  questions Question[] @relation("Who asked the question")
+  answers   Question[] @relation("Which user was asked")
+}
+
+model Question {
+  id         Int      @id @default(autoincrement())
+  question   String
+  answer     String?
+  createdAt  DateTime @default(now())
+  isAnswered Boolean
+  Asker      User     @relation(fields: [askerId], references: [id], name: "Who asked the question")
+  user       User     @relation(fields: [userId], references: [id], name: "Which user was asked")
+  askerId    Int
+  userId     Int
+}
