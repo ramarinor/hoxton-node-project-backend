@@ -160,4 +160,20 @@ app.post('/questions', async (req, res) => {
   }
 });
 
-// app.get('/questions', async);
+app.get('/questions', async (req, res) => {
+  const token = req.headers.authorization || '';
+  try {
+    const user = await getUserFromToken(token);
+    if (!user) throw Error('Boom');
+    const questions = await prisma.question.findMany({
+      where: { userId: user.id, isAnswered: false },
+      include: { asker: { select: { username: true } } }
+    });
+    res.send(questions);
+  } catch (err) {
+    //@ts-ignore
+    res
+      .status(401)
+      .send({ error: `Only signed in users can see their questions` });
+  }
+});
