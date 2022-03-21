@@ -26,7 +26,7 @@ model Question {
   answer     String?
   createdAt  DateTime @default(now())
   isAnswered Boolean
-  Asker      User     @relation(fields: [askerId], references: [id], name: "Who asked the question")
+  asker      User     @relation(fields: [askerId], references: [id], name: "Who asked the question")
   user       User     @relation(fields: [userId], references: [id], name: "Which user was asked")
   askerId    Int
   userId     Int

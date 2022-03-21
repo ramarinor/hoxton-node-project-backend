@@ -94,3 +94,23 @@ app.get('/validate', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.get('/answers/:username', async (req, res) => {
+  const username = req.params.username;
+  console.log(username);
+  try {
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (user) {
+      const answers = await prisma.question.findMany({
+        where: { userId: user.id, isAnswered: true },
+        include: { asker: { select: { username: true } } }
+      });
+      res.send(answers);
+    } else {
+      res.send({ error: 'User not found' });
+    }
+  } catch (err) {
+    // @ts-ignore
+    res.status(400).send({ error: err.message });
+  }
+});
