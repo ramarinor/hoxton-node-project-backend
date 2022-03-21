@@ -97,7 +97,6 @@ app.get('/validate', async (req, res) => {
 
 app.get('/answers/:username', async (req, res) => {
   const username = req.params.username;
-  console.log(username);
   try {
     const user = await prisma.user.findUnique({ where: { username } });
     if (user) {
@@ -107,10 +106,36 @@ app.get('/answers/:username', async (req, res) => {
       });
       res.send(answers);
     } else {
-      res.send({ error: 'User not found' });
+      res.status(404).send({ error: 'User not found' });
     }
   } catch (err) {
     // @ts-ignore
     res.status(400).send({ error: err.message });
+  }
+});
+
+app.post('/questions', async (req, res) => {
+  const token = req.headers.authorization || '';
+  const { question, username } = req.body;
+  try {
+    const asker = await getUserFromToken(token);
+    if (!asker) {
+      res
+        .status(401)
+        .send({ error: 'You need to be signed in to post a question' });
+      return;
+    }
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (!user) {
+      res.status(404).send({ error: 'User not found' });
+      return;
+    }
+    await prisma.question.create({
+      data: { question, askerId: asker.id, userId: user.id }
+    });
+    res.send({ message: 'Question successfully asked!' });
+  } catch (err) {
+    //@ts-ignore
+    res.send({ error: err.message });
   }
 });
