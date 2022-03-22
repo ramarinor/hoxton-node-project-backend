@@ -125,6 +125,11 @@ app.get('/answers/:username', async (req, res) => {
         where: { userId: user.id, isAnswered: true },
         include: { asker: { select: { username: true } } }
       });
+      answers.sort(function (a, b) {
+        if (a.createdAt > b.createdAt) return -1;
+        else return 1;
+      });
+
       res.send(answers);
     } else {
       res.status(404).send({ error: 'User not found!' });
