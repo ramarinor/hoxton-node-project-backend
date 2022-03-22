@@ -77,8 +77,9 @@ app.post('/sign-up', async (req, res) => {
     });
     res.send({ user, token: createToken(user.id) });
   } catch (err) {
-    // @ts-ignore
-    res.status(400).send({ error: err.message });
+    res.status(400).send({
+      error: "The e-mail or username you're trying to use already exists!"
+    });
   }
 });
 
