@@ -84,11 +84,11 @@ app.post('/sign-up', async (req, res) => {
 });
 
 app.post('/sign-in', async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { username }
+      where: { email }
     });
     // @ts-ignore
     const passwordMatches = bcrypt.compareSync(password, user.password);
