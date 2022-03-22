@@ -175,6 +175,10 @@ app.get('/questions', async (req, res) => {
       where: { userId: user.id, isAnswered: false },
       include: { asker: { select: { username: true } } }
     });
+    questions.sort(function (a, b) {
+      if (a.createdAt > b.createdAt) return -1;
+      else return 1;
+    });
     res.send(questions);
   } catch (err) {
     res
@@ -209,6 +213,10 @@ app.patch('/questions/:id', async (req, res) => {
         where: { userId: user.id, isAnswered: false },
         include: { asker: { select: { username: true } } }
       });
+      questions.sort(function (a, b) {
+        if (a.createdAt > b.createdAt) return -1;
+        else return 1;
+      });
       res.send(questions);
     } else {
       res
@@ -239,6 +247,10 @@ app.delete('/questions/:id', async (req, res) => {
       const questions = await prisma.question.findMany({
         where: { userId: user.id, isAnswered: false },
         include: { asker: { select: { username: true } } }
+      });
+      questions.sort(function (a, b) {
+        if (a.createdAt > b.createdAt) return -1;
+        else return 1;
       });
       res.send(questions);
     } else {
