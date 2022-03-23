@@ -61,6 +61,27 @@ app.get('/users/:username', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.get('/users', async (req, res) => {
+  const search = req.query.search as string;
+  console.log(search);
+  let users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      image: true
+    }
+  });
+  if (search) {
+    users = users.filter((user) =>
+      user.username.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+  users.sort(() => Math.random() - 0.5);
+  res.send(users);
+});
+
 app.post('/sign-up', async (req, res) => {
   const { email, username, password, image } = req.body;
 
