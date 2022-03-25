@@ -39,8 +39,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.listen(PORT, () => console.log(`Server up: http://localhost:${PORT}`));
-
 app.get('/users/:username', async (req, res) => {
   const username = req.params.username;
   try {
@@ -64,7 +62,7 @@ app.get('/users/:username', async (req, res) => {
 
 app.get('/users', async (req, res) => {
   const search = req.query.search as string;
-  console.log(search);
+
   let users = await prisma.user.findMany({
     select: {
       id: true,
@@ -285,3 +283,45 @@ app.delete('/questions/:id', async (req, res) => {
       .send({ error: `Only signed in users can delete their questions` });
   }
 });
+
+app.patch('/users/:username', async (req, res) => {
+  const currentUsername = req.params.username;
+  const currentPassword = req.body.currentPassword || '';
+  const { username, email, password, image } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username: currentUsername }
+    });
+    // @ts-ignore
+    const passwordMatches = bcrypt.compareSync(currentPassword, user.password);
+    if (user && passwordMatches) {
+      //@ts-ignore
+      const hash = bcrypt.hashSync(password ?? currentPassword);
+      console.log('test');
+      const updatedUser = await prisma.user.update({
+        where: { username: currentUsername },
+        data: {
+          username: username ?? user.username,
+          email: email ?? user.email,
+          password: hash,
+          image: image ?? user.image
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          image: true
+        }
+      });
+      res.send(updatedUser);
+    } else {
+      res.status(401).send({ error: 'Password invalid' });
+    }
+  } catch (err) {
+    //@ts-ignore
+    res.status(400).send({ error: 'Something went wrong!' });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server up: http://localhost:${PORT}`));
